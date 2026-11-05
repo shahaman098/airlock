@@ -12,6 +12,24 @@ WORKSPACES_DIR = DATA_DIR / "workspaces"
 RECEIPTS_DIR = DATA_DIR / "receipts"
 
 
+def _load_dotenv() -> None:
+    """Tiny .env loader (backend/.env) — no dependency, real env wins."""
+    env_file = BASE_DIR / ".env"
+    if not env_file.is_file():
+        return
+    for line in env_file.read_text().splitlines():
+        line = line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        k, _, v = line.partition("=")
+        k, v = k.strip(), v.strip().strip('"').strip("'")
+        if k and k not in os.environ:
+            os.environ[k] = v
+
+
+_load_dotenv()
+
+
 def _ensure_dirs() -> None:
     for d in (DATA_DIR, UPLOADS_DIR, WORKSPACES_DIR, RECEIPTS_DIR):
         d.mkdir(parents=True, exist_ok=True)
