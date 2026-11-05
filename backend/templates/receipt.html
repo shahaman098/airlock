@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Receipt {{ doc.task_id }}{% endblock %}
+{% block content %}
+<section class="hero">
+  <h1>Containment receipt <span class="mono">{{ doc.task_id }}</span></h1>
+  <div class="chips">
+    <span class="badge {{ 'ok' if verify.valid else 'bad' }}">{{ 'chain verified · ' ~ verify.events ~ ' events' if verify.valid else 'CHAIN INVALID at ' ~ verify.first_bad_seq }}</span>
+    <span class="chip">secrets injected: {{ doc.secrets_injected_into_sandbox }}</span>
+    <span class="chip">{{ doc.algorithm }}</span>
+  </div>
+</section>
+<section class="card">
+  <table>
+    <thead><tr><th>#</th><th>event</th><th>detail</th><th>hash</th></tr></thead>
+    <tbody>
+    {% for e in doc.events %}
+      <tr>
+        <td>{{ e.seq }}</td>
+        <td class="mono">{{ e.type }}</td>
+        <td class="mono small">{{ e.detail | tojson }}</td>
+        <td class="mono small hash">{{ e.hash[:16] }}…</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</section>
+<section class="card">
+  <h2>Raw receipt</h2>
+  <pre class="out">{{ raw }}</pre>
+</section>
+{% endblock %}

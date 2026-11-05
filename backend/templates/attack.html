@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Attack Mode{% endblock %}
+{% block content %}
+<section class="hero">
+  <h1>Attack Mode — <em>try to break out.</em></h1>
+  <p class="sub">Every payload below runs through the exact same jailed pipeline as a normal
+  analysis. Nothing is special-cased: that is the product. Watch the sandbox absorb it,
+  destroy itself, and leave a receipt.</p>
+  <div class="chips">
+    <span class="chip {{ 'ok' if docker_ok else 'bad' }}">docker {{ 'online' if docker_ok else 'offline' }}</span>
+    <span class="chip">runtime: {{ runtime }}</span>
+  </div>
+</section>
+
+<section class="payload-grid">
+  {% for key, p in payloads.items() %}
+  <form method="post" action="/attack/{{ key }}">
+    <button class="payload-btn" type="submit"><b>{{ p.label }}</b><br><span>{{ p.blurb }}</span></button>
+  </form>
+  {% endfor %}
+</section>
+{% endblock %}

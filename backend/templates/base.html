@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Airlock — {% block title %}Workbench{% endblock %}</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <script src="https://unpkg.com/htmx.org@2.0.4" defer></script>
+</head>
+<body>
+  <nav>
+    <a class="brand" href="/">◫ AIRLOCK</a>
+    <div class="nav-links">
+      <a href="/">Workbench</a>
+      <a href="/attack">Attack Mode</a>
+      <a href="/receipts">Receipts</a>
+      <a href="/health" target="_blank">Health</a>
+    </div>
+  </nav>
+  <main>
+    {% block content %}{% endblock %}
+  </main>
+  <footer>
+    <span>sandbox runtime: {{ runtime | default('—') }}</span>
+    <span>every action contained · every task receipted</span>
+  </footer>
+</body>
+</html>

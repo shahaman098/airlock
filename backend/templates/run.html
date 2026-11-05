@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block title %}{{ run.title }}{% endblock %}
+{% block content %}
+<section class="hero">
+  <h1>{% if is_attack %}⚔ Attack run{% else %}Analysis run{% endif %} <span class="mono">{{ run.id }}</span></h1>
+  <p class="sub mono">{{ run.title }}</p>
+</section>
+
+<section class="grid">
+  <div class="card">
+    <h2>Live containment timeline</h2>
+    <div id="timeline" class="timeline" hx-ext="sse"></div>
+    <div class="legend">
+      <span class="badge created">created</span>
+      <span class="badge blocked">blocked/absorbed</span>
+      <span class="badge destroyed">destroyed</span>
+    </div>
+  </div>
+  <div class="card" id="result-slot">
+    <h2>Result</h2>
+    <p class="hint" id="result-waiting">Running… the timeline fills as the agent works inside the jail.</p>
+  </div>
+</section>
+
+{% if is_attack %}
+<section class="card">
+  <h2>Run another payload</h2>
+  <div class="payload-grid">
+    {% for key, p in payloads.items() %}
+    <form method="post" action="/attack/{{ key }}">
+      <button class="payload-btn" type="submit"><b>{{ p.label }}</b><br><span>{{ p.blurb }}</span></button>
+    </form>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+<script>
+const es = new EventSource("/events/{{ run.id }}");
+const tl = document.getElementById("timeline");
+const BLOCKED = new Set(["BLOCKED_TIMEOUT", "BLOCKED_OOM", "ATTACK_VERDICT"]);
+const DESTROY = new Set(["SANDBOX_DESTROYED", "SERVICE_HEALTH_AFTER"]);
+function fmt(e) {
+  const cls = BLOCKED.has(e.type) ? "blocked" : DESTROY.has(e.type) ? "destroyed" : "created";
+  let detail = "";
+  if (e.type === "SANDBOX_CREATED") detail = `runtime=${e.runtime} network=${e.network} limits=${JSON.stringify(e.limits)}`;
+  else if (e.type === "MODEL_CALL") detail = `asking the model (iteration ${e.iteration ?? ""})`;
+  else if (e.type === "MODEL_RESPONSE") detail = `model=${e.model} finish=${e.finish_reason}`;
+  else if (e.type === "TOOL_CALL") detail = `${e.tool}() → sandbox`;
+  else if (e.type === "BLOCKED_TIMEOUT") detail = `wall-clock cap hit — sandbox absorbed it`;
+  else if (e.type === "BLOCKED_OOM") detail = `memory cap hit — kernel killed it`;
+  else if (e.type === "SANDBOX_DESTROYED") detail = `container removed (${e.duration_s}s lifetime)`;
+  else if (e.type === "ATTACK_VERDICT") detail = `absorbed=${e.absorbed} termination=${e.termination}`;
+  else if (e.type === "SERVICE_HEALTH_AFTER") detail = `service still ${e.status}`;
+  else if (e.type === "ARTIFACTS") detail = (e.files || []).join(", ");
+  else if (e.type === "TASK_COMPLETED") detail = `receipt sealed`;
+  else if (e.type === "TASK_FAILED") detail = e.error || "failed";
+  else if (e.type === "RUN_FAILED") detail = e.error || "failed";
+  else if (e.type === "DATA_SEALED") detail = `${e.file} (${e.bytes} bytes) mounted read-only`;
+  else detail = JSON.stringify(e.detail ?? {});
+  const row = document.createElement("div");
+  row.className = `event ${cls}`;
+  row.innerHTML = `<span class="etype">${e.type}</span><span class="edetail">${detail}</span>`;
+  tl.appendChild(row);
+  tl.scrollTop = tl.scrollHeight;
+}
+es.onmessage = (m) => { try { fmt(JSON.parse(m.data)); } catch {} };
+es.addEventListener("done", () => {
+  es.close();
+  htmx.ajax("GET", "/run/{{ run.id }}/result", "#result-slot");
+});
+es.onerror = () => { /* stream ends after done; ignore */ };
+</script>
+{% endblock %}

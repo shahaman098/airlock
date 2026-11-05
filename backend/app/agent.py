@@ -106,8 +106,8 @@ class AirlockAgent:
         return "\n".join(parts) or "(no output)"
 
     # -- main loop ---------------------------------------------------------
-    def run_task(self, question: str, csv: tuple[str, bytes] | None = None) -> TaskOutcome:
-        task_id = uuid.uuid4().hex[:12]
+    def run_task(self, question: str, csv: tuple[str, bytes] | None = None, task_id: str | None = None) -> TaskOutcome:
+        task_id = task_id or uuid.uuid4().hex[:12]
         receipt = Receipt(task_id=task_id)
         ws = WORKSPACES_DIR / task_id
         (ws / "input").mkdir(parents=True, exist_ok=True)

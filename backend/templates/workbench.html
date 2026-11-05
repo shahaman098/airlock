@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}Workbench{% endblock %}
+{% block content %}
+<section class="hero">
+  <h1>Sensitive-data analysis where the AI's code runs in a jail, <em>not on your servers.</em></h1>
+  <p class="sub">Upload a file, ask a question. The agent's Python executes inside a sealed,
+  network-isolated sandbox on Vultr — and every task ends with a tamper-evident containment receipt.</p>
+  <div class="chips">
+    <span class="chip {{ 'ok' if docker_ok else 'bad' }}">docker {{ 'online' if docker_ok else 'offline' }}</span>
+    <span class="chip">runtime: {{ runtime }}</span>
+    <span class="chip {{ 'ok' if api_key_set else 'warn' }}">inference {{ 'configured' if api_key_set else 'demo mode — set VULTR_INFERENCE_API_KEY' }}</span>
+  </div>
+</section>
+
+<section class="grid">
+  <div class="card">
+    <h2>New analysis</h2>
+    <form action="/upload" method="post" enctype="multipart/form-data">
+      <label>CSV file (≤ 10 MB)</label>
+      <input type="file" name="file" accept=".csv,.tsv,.json" required>
+      <label>Question</label>
+      <textarea name="question" rows="3" required
+        placeholder="Which region generated the most revenue? Chart it."></textarea>
+      <button type="submit">Run in Airlock ▸</button>
+    </form>
+    <p class="hint">The file is sealed into the sandbox read-only. The model only ever writes code;
+    it never sees your infrastructure.</p>
+  </div>
+
+  <div class="card">
+    <h2>How containment works</h2>
+    <ol class="flow">
+      <li><b>Seal.</b> Your file is mounted read-only into a throwaway container.</li>
+      <li><b>Jail.</b> No network, CPU/memory/pids caps, read-only rootfs, all capabilities dropped{% if runtime == 'runsc' %}, gVisor userspace kernel{% endif %}.</li>
+      <li><b>Destroy.</b> The container is killed and removed after every run — nothing survives.</li>
+      <li><b>Prove.</b> A sha256-chained receipt logs every action, block and destruction.</li>
+    </ol>
+    <p class="hint"><a href="/attack">Attack mode ▸</a> — watch rm -rf, fork bombs and exfiltration attempts get absorbed live.</p>
+  </div>
+</section>
+
+<section class="card">
+  <h2>Recent receipts</h2>
+  {% if recent %}
+  <table>
+    <thead><tr><th>task</th><th>model</th><th>status</th><th>chain</th><th></th></tr></thead>
+    <tbody>
+    {% for r in recent %}
+      <tr>
+        <td class="mono">{{ r.id }}</td>
+        <td>{{ r.summary.get('model_used', '—') }}</td>
+        <td><span class="badge {{ r.summary.get('status','') }}">{{ r.summary.get('status','—') }}</span></td>
+        <td><span class="badge {{ 'ok' if r.valid.valid else 'bad' }}">{{ 'verified' if r.valid.valid else 'INVALID' }}</span></td>
+        <td><a href="/receipt/{{ r.id }}">open ▸</a></td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% else %}<p class="hint">No tasks yet — run your first analysis.</p>{% endif %}
+</section>
+{% endblock %}

@@ -1,0 +1,43 @@
+{% if run.status == "running" %}
+  <p class="hint">Still running…</p>
+{% elif run.kind == "attack" and run.attack_result %}
+  <div class="verdict {{ 'absorbed' if run.attack_result.absorbed else 'leaked' }}">
+    {% if run.attack_result.absorbed %}
+      ✔ ABSORBED — the sandbox took the hit and was destroyed. Service unaffected.
+    {% else %}
+      ✖ NOT ABSORBED — investigate immediately.
+    {% endif %}
+  </div>
+  <h3>Attack output</h3>
+  <pre class="out">{{ run.attack_result.stdout or run.attack_result.stderr or '(no output)' }}</pre>
+  <div class="chips">
+    <span class="chip ok">health after: {{ run.attack_result.health.status }}</span>
+    <span class="chip">termination: {{ run.attack_result.termination }}</span>
+    <a class="chip" href="{{ run.attack_result.receipt }}">containment receipt ▸</a>
+  </div>
+{% elif run.kind == "task" and run.outcome %}
+  {% if run.status == "failed" %}
+    <div class="verdict leaked">✖ {{ run.outcome.error or "run failed" }}</div>
+  {% endif %}
+  <div class="answer">{{ run.outcome.answer }}</div>
+  {% if run.outcome.artifacts %}
+  <h3>Artifacts</h3>
+  <div class="artifacts">
+    {% for a in run.outcome.artifacts %}
+      {% if a.name.endswith('.png') %}
+        <figure><img src="/artifact/{{ run.outcome.task_id }}/{{ a.name }}" alt="{{ a.name }}">
+        <figcaption class="mono">{{ a.name }}</figcaption></figure>
+      {% else %}
+        <span class="chip mono">{{ a.name }} ({{ a.size }} B)</span>
+      {% endif %}
+    {% endfor %}
+  </div>
+  {% endif %}
+  <div class="chips">
+    <span class="chip">model: {{ run.outcome.model_used or '—' }}</span>
+    <span class="chip">iterations: {{ run.outcome.iterations }}</span>
+    <a class="chip" href="/receipt/{{ run.outcome.task_id }}">containment receipt ▸</a>
+  </div>
+{% else %}
+  <p class="hint">No result recorded.</p>
+{% endif %}
