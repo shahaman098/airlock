@@ -62,6 +62,10 @@ Every run emits a **receipt** (`data/receipts/<task>.json`): an ordered, SHA-256
 event log (`Receipt.verify_receipt()` re-verifies it; the UI shows *verified / INVALID*).
 Open any receipt from the Receipts page.
 
+Every chart is also **QA'd by a second model**: the vision-capable omni endpoint checks each
+rendered PNG for legibility before delivery (`VISION_QA` event in the receipt, verdict shown
+with the artifact). A vision failure marks the chart *unverified* — it never breaks the task.
+
 ## Run it
 
 ### Locally (Docker required)

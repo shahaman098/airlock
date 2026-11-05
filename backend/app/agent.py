@@ -160,6 +160,7 @@ class AirlockAgent:
             outcome.artifacts = self._collect_artifacts(ws)
             receipt.add("TASK_COMPLETED", answer_chars=len(outcome.answer),
                         artifacts=[a["name"] for a in outcome.artifacts])
+            self._vision_qa(outcome, receipt)
         except Exception as exc:  # noqa: BLE001 — a failed task must still seal its receipt
             outcome.status = "failed"
             outcome.error = str(exc)
@@ -186,6 +187,23 @@ class AirlockAgent:
         if call.name == "list_files":
             return self._tool_list_files(ws)
         return f"[error] unknown tool {call.name}"
+
+    def _vision_qa(self, outcome: TaskOutcome, receipt: Receipt) -> None:
+        """Second-model QA: the omni vision model checks every chart before delivery.
+
+        Best-effort: a vision failure adds a receipt event, never breaks the task.
+        """
+        if outcome.status != "completed":
+            return
+        for a in outcome.artifacts:
+            if not a["name"].lower().endswith(".png"):
+                continue
+            try:
+                verdict = self.client.vision_check(Path(a["path"]).read_bytes())
+                a["vision_qa"] = verdict
+                receipt.add("VISION_QA", artifact=a["name"], verdict=verdict[:200])
+            except Exception as exc:  # noqa: BLE001
+                receipt.add("VISION_QA", artifact=a["name"], verdict=f"unverified: {type(exc).__name__}")
 
     @staticmethod
     def _collect_artifacts(ws: Path) -> list[dict[str, Any]]:

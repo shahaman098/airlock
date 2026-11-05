@@ -124,5 +124,37 @@ class VultrClient:
             usage=payload.get("usage", {}),
         )
 
+    # -- vision ------------------------------------------------------------
+    def vision_check(self, png_bytes: bytes, question: str | None = None) -> str:
+        """Ask the vision-capable omni model whether a chart rendered correctly.
+
+        Best-effort by design: callers treat any failure as 'unverified', never fatal.
+        """
+        import base64
+
+        prompt = question or (
+            "This image was produced by matplotlib inside a sandbox. Answer in one short "
+            "sentence: does it show a legible, non-empty chart (title/axes/bars visible)? "
+            "Reply 'PASS: <what it shows>' or 'FAIL: <why>'."
+        )
+        body = {
+            "model": settings.vision_model,
+            "messages": [{
+                "role": "user",
+                "content": [
+                    {"type": "text", "text": prompt},
+                    {"type": "image_url", "image_url": {
+                        "url": "data:image/png;base64," + base64.b64encode(png_bytes).decode()
+                    }},
+                ],
+            }],
+        }
+        r = self._http.post("/chat/completions", json=body)
+        r.raise_for_status()
+        choices = r.json().get("choices") or []
+        if not choices:
+            raise VultrInferenceError("empty vision response")
+        return (choices[0].get("message", {}).get("content") or "").strip()
+
     def close(self) -> None:
         self._http.close()
