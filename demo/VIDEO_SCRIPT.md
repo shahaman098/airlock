@@ -6,13 +6,14 @@ clock. The containment moment is the centrepiece — do not rush it.
 
 ---
 
-## Scene 1 — Hook (0:00–0:25)
+## Scene 1 — Hook (0:00–0:25) — name the user in the first 30 seconds
 **[Screen: Airlock workbench, empty]**
 
-> "Companies want AI-analyst productivity — but can't risk AI-analyst behaviour. What
-> happens when an LLM writes code that touches your customer data? Airlock is the answer:
-> sensitive-data analysis where the AI's code runs in a jail — not on your servers. And
-> every single task ends with a receipt you can audit."
+> "Meet the analyst every finance team has: smart, careful — and forbidden from using AI
+> agents, because the last one generated code that touched production. What happens when
+> an LLM writes code that runs against your customer data? It can delete files, fork-bomb,
+> or quietly email the dataset out. Airlock is where that code goes instead: a jail on your
+> own Vultr VM — and every task ends with a receipt you can audit. Watch."
 
 ## Scene 2 — The real journey (0:25–1:25)
 **[Screen: upload `customer_churn_700.csv`, type question]**
@@ -28,15 +29,23 @@ clock. The containment moment is the centrepiece — do not rush it.
 
 **[Timeline fills; chart appears; answer summarises churn drivers]**
 
-> "There's the chart, there's the answer — built from executed code, not a hallucination."
+> "There's the chart, there's the answer — built from executed code, not a hallucination.
+> And before you see it, a second model looked at the chart and confirmed it actually
+> rendered. That verdict is in the receipt too."
 
-## Scene 3 — The receipt (1:25–2:05)
+## Scene 2b — One breath of architecture (optional, ≤ 10s)
+**[Screen: architecture strip on screen]**
+
+> "One Vultr VM, one model endpoint — everything on infrastructure we control."
+
+## Scene 3 — The receipt (1:25–2:05) — the differentiator, do not skip
 **[Screen: open containment receipt]**
 
-> "And this is what no other tool gives you: a containment receipt. Every model call,
+> "And this is what no sandbox service gives you: a containment receipt. E2B and the
+> commercial interpreters isolate — none of them prove what happened. Every model call,
 > every line of code executed, every artifact — chained together with SHA-256. If anyone
-> tampers with this log, the chain breaks and verification fails. The sandbox was created,
-> did its work, and was destroyed. Nothing persists."
+> tampers with this log, the chain breaks and verification fails on screen. The sandbox
+> was created, did its work, and was destroyed. Nothing persists."
 
 ## Scene 4 — ATTACK MODE (2:05–3:05) — the containment moment
 **[Screen: /attack page]**

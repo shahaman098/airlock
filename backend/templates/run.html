@@ -9,7 +9,7 @@
 <section class="grid">
   <div class="card">
     <h2>Live containment timeline</h2>
-    <div id="timeline" class="timeline" hx-ext="sse"></div>
+    <div id="timeline" class="timeline"></div>
     <div class="legend">
       <span class="badge created">created</span>
       <span class="badge blocked">blocked/absorbed</span>
@@ -67,7 +67,9 @@ function fmt(e) {
 es.onmessage = (m) => { try { fmt(JSON.parse(m.data)); } catch {} };
 es.addEventListener("done", () => {
   es.close();
-  htmx.ajax("GET", "/run/{{ run.id }}/result", "#result-slot");
+  fetch("/run/{{ run.id }}/result")
+    .then(r => r.text())
+    .then(html => { document.getElementById("result-slot").innerHTML = html; });
 });
 es.onerror = () => { /* stream ends after done; ignore */ };
 </script>

@@ -10,6 +10,32 @@ what the model decided, what code ran, what was blocked, and proof the sandbox w
 
 > *An agent that only chats is a demo. One that executes safely is a product — with proof.*
 
+<p align="center">
+  <img src="docs/screenshots/workbench.png" width="49%" alt="Airlock workbench">
+  <img src="docs/screenshots/attack_absorbed.png" width="49%" alt="Attack mode: rm -rf absorbed">
+</p>
+
+## Who buys this (business value)
+
+**Buyer:** engineering/security leads at regulated organisations — fintech and health analytics teams, MSPs, and any data team that today forbids AI agents from touching customer data.
+
+**What they buy:** not "a sandbox" — *provable* agent containment. SaaS code interpreters say "trust us"; Airlock hands the compliance team a SHA-256-chained receipt per task: what the model decided, what code executed, what the kernel blocked, and proof the execution environment was destroyed. Self-hosted on one Vultr VM — the data never leaves the buyer's infrastructure, and the audit trail is cryptographic, not narrative.
+
+## What makes this different (originality)
+
+E2B, Cloudflare sandboxes and commercial interpreters **isolate**. None of them give you a **cryptographic, tamper-evident record of what ran, what it tried, and what was absorbed** — and none let you attack the pipeline on demand. Airlock's headline is the evidence layer: chained receipts, on-screen chain verification, and an Attack Mode that fires `rm -rf /`, fork bombs, memory bombs, exfiltration and a zip bomb through the *same* jailed pipeline as a normal analysis. The pandas analysis is the payload; verifiable containment is the product.
+
+## Verified evidence (all reproducible from this repo)
+
+| Claim | Evidence |
+|---|---|
+| Containment holds under attack | `backend/tests/gate_sandbox.py` — 11/11: `rm -rf` blocked (read-only rootfs + dropped caps), fork bomb/pids cap, OOM-killed memory bombs, network void, force-removed containers, zero survivors |
+| Attacks absorbed end-to-end | **5/5 payloads ABSORBED over HTTP** (rm-rf, fork bomb, memory bomb, exfil, 2 GB zip bomb); each run seals a chain-verified receipt |
+| Receipts are tamper-evident | SHA-256 chain: editing one event fails on-screen verification (tested); `Receipt.verify_receipt()` |
+| Agent loop is production-shaped | `backend/tests/gate_agent.py` — 11/11: real tool dispatch → real sandbox → receipts → artifacts, LLM mocked at HTTP only; unknown tools handled gracefully |
+| Model integration | OpenAI-compatible `tools[]` on Vultr Serverless Inference; fallback model chain; all 4 chain model IDs verified against the **live** Vultr catalog; per-model 401/404/429 handling tested |
+| Charts are QA'd by a second model | Vision QA via the omni endpoint; verdict lands in the receipt (`VISION_QA`) |
+
 ## Why
 
 Enterprises block AI agents from sensitive data for one reason: **trust**. Model-generated
@@ -114,3 +140,20 @@ payment methods churn the most? Chart it."*
 
 Python 3.12 · FastAPI · HTMX + vanilla SSE · Docker + gVisor · Vultr Serverless Inference.
 MIT licensed.
+
+## Judging-criteria mapping (Blast Radius Zero)
+
+| Criterion | Where it's demonstrated |
+|---|---|
+| Application of Technology | Every LLM call via Vultr Serverless Inference (`tools[]` calling, fallback chain, live-verified model IDs); gVisor userspace kernel sandboxing; dual-model architecture (flash brain + omni vision QA) |
+| Presentation | 3–4 min video: named user → live analysis → receipt → **Attack Mode containment moment** → public URL (script: `demo/VIDEO_SCRIPT.md`) |
+| Business Value | Regulated-data teams get agent productivity with a cryptographic audit trail — self-hosted, no per-seat SaaS (see *Who buys this*) |
+| Originality | Verifiable containment: tamper-evident receipts + on-demand adversarial Attack Mode — not "a sandbox", the evidence layer on top of one |
+
+## Known limitations (honest list)
+
+- Sandboxes are Docker+gVisor containers on one shared-kernel VM, not Firecracker microVMs — strong isolation for this threat model, but a determined kernel-escape bug in the host kernel is out of scope.
+- The demo journey is read-only analysis (CSV/JSON in, charts/code out) — no writeback to source systems yet.
+- Attack Mode's payloads are classical (shell, resource, network) — LLM prompt-injection inside the *sandbox payload* is a next step.
+- Single-tenant demo: no auth, one task at a time by design; hardening multi-tenancy is post-hackathon work.
+- Vision QA is best-effort: if the omni endpoint is unavailable, charts ship marked `unverified` in the receipt, never blocked.

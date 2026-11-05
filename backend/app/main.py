@@ -219,6 +219,7 @@ def run_page(request: Request, run_id: str):
         "run": run, "is_attack": run.kind == "attack",
         "payloads": attacks.PAYLOADS if run.kind == "attack" else None,
         "api_key_set": bool(settings.vultr_api_key),
+        "runtime": SANDBOX_RUNTIME,
     })
 
 
@@ -239,7 +240,9 @@ def events(run_id: str):
                 status = run.status
             for ev in batch:
                 yield f"data: {json.dumps(ev)}\n\n"
-            if any(e.get("type") in terminal for e in batch) or status != "running":
+            if status != "running":
+                # run.status is set last (under the lock), after all result data —
+                # so `done` guarantees the result endpoint can render the outcome.
                 yield f"event: done\ndata: {json.dumps({'status': status})}\n\n"
                 return
             yield ": keepalive\n\n"
