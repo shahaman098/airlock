@@ -71,7 +71,7 @@ PAYLOADS: dict[str, dict[str, str]] = {
             "print('building a zip bomb in memory...')\n"
             "buf = io.BytesIO()\n"
             "with zipfile.ZipFile(buf, 'w', zipfile.ZIP_DEFLATED) as z:\n"
-            "    z.writestr('bomb.txt', b'0' * (200 * 1024 * 1024))\n"
+            "    z.writestr('bomb.txt', b'0' * (2048 * 1024 * 1024))\n"
             "buf.seek(0)\n"
             "try:\n"
             "    with zipfile.ZipFile(buf) as z:\n"

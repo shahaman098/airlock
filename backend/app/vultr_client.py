@@ -37,7 +37,7 @@ class VultrInferenceError(RuntimeError):
 
 
 class VultrClient:
-    def __init__(self) -> None:
+    def __init__(self, transport: httpx.BaseTransport | None = None) -> None:
         if not settings.vultr_api_key:
             raise VultrInferenceError(
                 "VULTR_INFERENCE_API_KEY is not set. Create one at console.vultr.com/inference."
@@ -46,6 +46,7 @@ class VultrClient:
             base_url=settings.inference_base_url,
             headers={"Authorization": f"Bearer {settings.vultr_api_key}"},
             timeout=settings.request_timeout_s,
+            transport=transport,
         )
         self._tools_ok: dict[str, bool] = {}  # model -> supports tool calling (observed)
 
