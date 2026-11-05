@@ -1,0 +1,12 @@
+# Airlock public entrypoint — set your domain or leave :80 for the bare IP.
+# For a production-style URL, point a DNS A record at the VM and set the domain here.
+:80 {
+	encode gzip
+	reverse_proxy 127.0.0.1:8000
+
+	header {
+		-Server
+		X-Content-Type-Options nosniff
+		Referrer-Policy no-referrer
+	}
+}
